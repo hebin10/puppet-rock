@@ -1,0 +1,69 @@
+# rock.ini: Managed by puppet
+#
+[DEFAULT]
+debug = <%= @debug %>
+verbose = <%= @verbose %>
+check_cases_interval = <%= @check_cases_interval %>
+message_report_to = <%= @message_report_to %>
+message_report_error_allowed = <%= @message_report_error_allowed %>
+log_dir = <%= @log_dir %>
+rock_mon_log_file = <%= @rock_mon_log_file %>
+rock_engine_log_file = <%= @rock_engine_log_file %>
+log_date_format = <%= @log_date_format %>
+# More about log configuration, please refer to
+# http://docs.openstack.org/developer/oslo.log/opts.html
+
+[host_mgmt_ping]
+compute_hosts = <%= @compute_hosts.join(',') %>
+<% unless @management_network_ip.nil? -%>
+<% if @management_network_ip != [] -%>
+management_network_ip = <%= @management_network_ip.join(',') %>
+<% end -%>
+<% end -%>
+<% unless @tunnel_network_ip.nil? -%>
+<% if @tunnel_network_ip != [] -%>
+tunnel_network_ip = <%= @tunnel_network_ip.join(',') %>
+<% end -%>
+<% end -%>
+<% unless @storage_network_ip.nil? -%>
+<% if @storage_network_ip != [] -%>
+storage_network_ip = <%= @storage_network_ip.join(',') %>
+<% end -%>
+<% end -%>
+
+[database]
+connection = <%= @real_connection %>
+# More about database configuration, please refer to
+# http://docs.openstack.org/developer/oslo.db/opts.html
+
+[openstack_credential]
+username = <%= @os_username %>
+user_domain_id = <%= @os_user_domain_id %>
+password = <%= @os_password %>
+auth_url = <%= @os_auth_url %>
+project_name = <%= @os_project_name %>
+project_domain_id = <%= @os_project_domain_id %>
+nova_client_version = <%= @os_nova_client_version %>
+
+[host_evacuate]
+check_times = <%= @he_check_times %>
+check_interval = <%= @he_check_interval %>
+
+[activemq]
+<% if @message_report_to == 'activemq'-%>
+server_ip = <%= @activemq_server_host %>
+server_port = <%= @activemq_server_port %>
+destination = <%= @activemq_destination %>
+<% unless @activemq_username.nil? -%>
+username = <%= @activemq_username %>
+<% end -%>
+<% unless @activemq_password.nil? -%>
+password = <%= @activemq_password %>
+<% end -%>
+<% end -%>
+
+[kiki]
+<% if @message_report_to == 'kiki' -%>
+mail_api_endpoint = <%= @mail_api_endpoint %>
+mail_address = <%= @mail_address.join(',') %>
+<% end -%>
