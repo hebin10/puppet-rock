@@ -43,6 +43,8 @@
 # Copyright 2016 Your name here, unless otherwise noted.
 #
 class rock (
+  $rock_db_backup_interval        = 2,
+  $rock_db_backup_clear_interval  = 14,
   $node_type                      = 'master',
   $remote_database                = true,
   $local_db_user                  = 'rock',
@@ -83,6 +85,7 @@ class rock (
   $os_nova_client_version         = '2.0',
 
   # [host_evacuate]
+  $on_shared_storage              = true,
   $he_check_times                 = 6,
   $he_check_interval              = 15,
 
@@ -180,6 +183,13 @@ class rock (
     content => template('rock/etc/cases/host_down.json.erb'),
   }
 
+  # Initialize backup database
+  exec {'rock-backup-db-init':
+    command     => '/usr/bin/rock-backup-db-init',
+    require     => File['/etc/rock/alembic.ini'],
+    subscribe   => File['/etc/rock/alembic.ini'],
+    refreshonly => true,
+  }
 
   # Initialize database
   exec { 'rock-db-upgrade':
@@ -199,16 +209,33 @@ class rock (
       ensure => stopped,
     }
   } else {
+    cron {'rock-db-backup':
+      ensure   => present,
+      command  => '/usr/local/bin/backup.sh',
+      user     => 'root',
+      hour     => 3,
+      minute   => 0,
+      monthday => "*/$rock_db_backup_interval",
+      require  => Exec['rock-backup-db-init'],
+    }
+    cron {'rock-db-backup-clear':
+      ensure   => present,
+      user     => 'root',
+      hour     => 3,
+      minute   => 30,
+      monthday => "*/$rock_db_backup_clear_interval",
+      command  => '/usr/local/bin/clear.sh',
+  }
     service { 'rock-mon':
       enable    => true,
       ensure    => running,
-      subscribe => [File['/etc/rock/rock.ini'], Exec['rock-db-upgrade']]
+      subscribe => [File['/etc/rock/rock.ini'], Exec['rock-db-upgrade']],
     }
     service { 'rock-engine':
       enable     => true,
       ensure     => running,
       subscribe => [File['/etc/rock/rock.ini', '/etc/rock/target.json', '/etc/rock/cases/host_down.json'],
-                    Exec['rock-db-upgrade']]
+                    Exec['rock-db-upgrade']],
     }
   }
 }
