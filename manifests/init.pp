@@ -129,10 +129,6 @@ class rock (
       fail("number of compute hosts, management networks and ipmi ips must be the same!")
   }
 
-  if $node_type != 'slave' and $node_type != 'master' {
-    fail("param 'node_type' must either be 'master' or 'slave'!")
-  }
-
   if $remote_database and $connection == undef {
     fail('When use remote database, you must provide a database connection string.')
   }
@@ -199,43 +195,32 @@ class rock (
   }
 
   # Service rock-mon and rock-engine
-  if $node_type == 'slave' {
-    service { 'rock-mon':
-      enable    => false,
-      ensure    => stopped,
-    }
-    service { 'rock-engine':
-      enable => false,
-      ensure => stopped,
-    }
-  } else {
-    cron {'rock-db-backup':
-      ensure   => present,
-      command  => '/usr/local/bin/backup.sh',
-      user     => 'root',
-      hour     => 3,
-      minute   => 0,
-      monthday => "*/$rock_db_backup_interval",
-      require  => Exec['rock-backup-db-init'],
-    }
-    cron {'rock-db-backup-clear':
-      ensure   => present,
-      user     => 'root',
-      hour     => 3,
-      minute   => 30,
-      monthday => "*/$rock_db_backup_clear_interval",
-      command  => '/usr/local/bin/clear.sh',
+  service { 'rock-mon':
+    enable    => false,
+    ensure    => stopped,
+    subscribe => [File['/etc/rock/rock.ini'], Exec['rock-db-upgrade']],
   }
-    service { 'rock-mon':
-      enable    => true,
-      ensure    => running,
-      subscribe => [File['/etc/rock/rock.ini'], Exec['rock-db-upgrade']],
-    }
-    service { 'rock-engine':
-      enable     => true,
-      ensure     => running,
-      subscribe => [File['/etc/rock/rock.ini', '/etc/rock/target.json', '/etc/rock/cases/host_down.json'],
-                    Exec['rock-db-upgrade']],
-    }
+  service { 'rock-engine':
+    enable => false,
+    ensure => stopped,
+    subscribe => [File['/etc/rock/rock.ini', '/etc/rock/target.json', '/etc/rock/cases/host_down.json'],
+                  Exec['rock-db-upgrade']],
+  }
+  cron {'rock-db-backup':
+    ensure   => present,
+    command  => '/usr/local/bin/backup.sh',
+    user     => 'root',
+    hour     => 3,
+    minute   => 0,
+    monthday => "*/$rock_db_backup_interval",
+    require  => Exec['rock-backup-db-init'],
+  }
+  cron {'rock-db-backup-clear':
+    ensure   => present,
+    user     => 'root',
+    hour     => 3,
+    minute   => 30,
+    monthday => "*/$rock_db_backup_clear_interval",
+    command  => '/usr/local/bin/clear.sh',
   }
 }
