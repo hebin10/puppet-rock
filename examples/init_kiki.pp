@@ -1,5 +1,4 @@
 class {'rock':
-  node_type                    => 'master',
   remote_database              => true,
 
   message_report_to            => 'kiki',

@@ -45,7 +45,6 @@
 class rock (
   $rock_db_backup_interval        = 2,
   $rock_db_backup_clear_interval  = 14,
-  $node_type                      = 'master',
   $remote_database                = true,
   $local_db_user                  = 'rock',
   $local_db_pass                  = undef,
