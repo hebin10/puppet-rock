@@ -196,12 +196,10 @@ class rock (
   # Service rock-mon and rock-engine
   service { 'rock-mon':
     enable    => false,
-    ensure    => stopped,
     subscribe => [File['/etc/rock/rock.ini'], Exec['rock-db-upgrade']],
   }
   service { 'rock-engine':
     enable => false,
-    ensure => stopped,
     subscribe => [File['/etc/rock/rock.ini', '/etc/rock/target.json', '/etc/rock/cases/host_down.json'],
                   Exec['rock-db-upgrade']],
   }
